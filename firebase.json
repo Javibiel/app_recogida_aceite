@@ -1,0 +1,28 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "recogida-aceite",
+          "appId": "1:1031538557629:android:49fc3c453408e1054eadd4",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "recogida-aceite",
+          "configurations": {
+            "android": "1:1031538557629:android:49fc3c453408e1054eadd4",
+            "ios": "1:1031538557629:ios:7eece9dfb32a42e44eadd4",
+            "macos": "1:1031538557629:ios:7eece9dfb32a42e44eadd4",
+            "web": "1:1031538557629:web:44b2f0092decd1c04eadd4",
+            "windows": "1:1031538557629:web:9541d36e0b57f27e4eadd4"
+          }
+        }
+      }
+    }
+  }
+}
