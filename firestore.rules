@@ -5,7 +5,7 @@ service cloud.firestore {
     match /recogidas/{document} {
       allow read, create: if true;
       allow delete: if true;
-      allow update: if false;
+      allow update: if true;
     }
 
     match /clientes/{document} {

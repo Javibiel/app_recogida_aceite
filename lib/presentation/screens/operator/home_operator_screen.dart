@@ -20,7 +20,7 @@ class HomeOperatorScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: const Color(0xFFE8F1D8),
+          backgroundColor: const Color(0xFFC7E0B0),
           title: Text(
             session.isManager
                 ? "Consola del encargado"
@@ -28,10 +28,10 @@ class HomeOperatorScreen extends StatelessWidget {
           ),
           actions: [
             if (session.isManager)
-              IconButton(
+              TextButton.icon(
                 onPressed: () => _showCreateClientDialog(context),
                 icon: const Icon(Icons.add_business),
-                tooltip: "Nuevo cliente",
+                label: const Text("Nuevo cliente"),
               ),
           ],
           bottom: const TabBar(
@@ -41,7 +41,7 @@ class HomeOperatorScreen extends StatelessWidget {
             ],
           ),
         ),
-        backgroundColor: const Color(0xFFE8F1D8),
+        backgroundColor: const Color(0xFFC7E0B0),
         body: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -83,10 +83,21 @@ class HomeOperatorScreen extends StatelessWidget {
   }
 }
 
-class _PickupRequestsTab extends StatelessWidget {
+class _PickupRequestsTab extends StatefulWidget {
   const _PickupRequestsTab({required this.session});
 
   final OperatorSession session;
+
+  @override
+  State<_PickupRequestsTab> createState() => _PickupRequestsTabState();
+}
+
+enum _PickupRequestFilter { all, pending, collected }
+
+class _PickupRequestsTabState extends State<_PickupRequestsTab> {
+  _PickupRequestFilter _selectedFilter = _PickupRequestFilter.all;
+  final Set<String> _knownRequestIds = <String>{};
+  bool _hasLoadedInitialRequests = false;
 
   Future<void> _confirmDeleteRequest(
     BuildContext context,
@@ -145,6 +156,63 @@ class _PickupRequestsTab extends StatelessWidget {
     }
   }
 
+  Future<void> _markRequestAsCollected(
+    BuildContext context,
+    PickupRequest request,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Confirmar recogida"),
+          content: Text(
+            "Confirmas que la recogida de ${request.clientName.isEmpty ? request.clientEmail : request.clientName} ha sido realizada?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancelar"),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("Confirmar"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    try {
+      await FirestoreDatabase().markPickupRequestAsCollected(request.id);
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Recogida marcada")));
+    } on FirebaseException catch (error) {
+      if (!context.mounted) return;
+
+      final message = error.code == 'permission-denied'
+          ? "No se pudo actualizar: publica las reglas de Firestore"
+          : "No se pudo actualizar: ${error.code}";
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (error) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("No se pudo actualizar: $error")));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -161,7 +229,7 @@ class _PickupRequestsTab extends StatelessWidget {
         Expanded(
           child: StreamBuilder<List<PickupRequest>>(
             stream: FirestoreDatabase().watchPickupRequests(
-              operatorCode: session.code,
+              operatorCode: widget.session.code,
             ),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
@@ -182,114 +250,468 @@ class _PickupRequestsTab extends StatelessWidget {
               }
 
               final requests = snapshot.data!;
+              _notifyNewPickupRequests(requests);
 
               if (requests.isEmpty) {
                 return Center(
                   child: Text(
-                    session.isManager
+                    widget.session.isManager
                         ? "No hay solicitudes pendientes"
-                        : "No hay solicitudes para ${session.route}",
+                        : "No hay solicitudes para ${widget.session.route}",
                   ),
                 );
               }
 
-              return ListView.separated(
-                itemCount: requests.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final request = requests[index];
-                  final createdAt = request.createdAt;
-
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.recycling),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      request.clientName.isEmpty
-                                          ? request.clientEmail
-                                          : request.clientName,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      createdAt == null
-                                          ? "${request.clientRoute} - fecha pendiente"
-                                          : "${request.clientRoute} - ${createdAt.day}/${createdAt.month}/${createdAt.year}",
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Text(
-                                session.isManager
-                                    ? "Op. ${request.assignedOperatorCode}"
-                                    : request.status,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          _RequestField(
-                            label: "Nombre",
-                            value: request.clientName.isEmpty
-                                ? request.clientEmail
-                                : request.clientName,
-                          ),
-                          _RequestField(
-                            label: "Direccion",
-                            value: request.clientAddress,
-                          ),
-                          _RequestField(
-                            label: "Telefono",
-                            value: request.clientPhone,
-                          ),
-                          _RequestField(
-                            label: "Contenedor",
-                            value: request.containerType,
-                          ),
-                          _RequestField(
-                            label: "Operario asignado",
-                            value: request.assignedOperatorCode == 0
-                                ? "Sin asignar"
-                                : "Operario ${request.assignedOperatorCode}",
-                          ),
-                          if (session.isManager) ...[
-                            const SizedBox(height: 14),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: FilledButton.icon(
-                                onPressed: () =>
-                                    _confirmDeleteRequest(context, request),
-                                icon: const Icon(Icons.delete),
-                                label: const Text("Eliminar"),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
+              return _buildRequestsContent(context, requests);
             },
           ),
         ),
       ],
+    );
+  }
+
+  void _notifyNewPickupRequests(List<PickupRequest> requests) {
+    final currentIds = requests.map((request) => request.id).toSet();
+
+    if (!_hasLoadedInitialRequests) {
+      _knownRequestIds
+        ..clear()
+        ..addAll(currentIds);
+      _hasLoadedInitialRequests = true;
+      return;
+    }
+
+    final newPendingRequests = requests
+        .where(
+          (request) =>
+              !_knownRequestIds.contains(request.id) && _isPending(request),
+        )
+        .toList(growable: false);
+
+    _knownRequestIds
+      ..clear()
+      ..addAll(currentIds);
+
+    if (newPendingRequests.isEmpty) {
+      return;
+    }
+
+    final message = newPendingRequests.length == 1
+        ? "Nueva recogida solicitada por ${_clientLabel(newPendingRequests.first)}"
+        : "${newPendingRequests.length} nuevas recogidas solicitadas";
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.notifications_active, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text(message)),
+              ],
+            ),
+            action: SnackBarAction(
+              label: "Ver",
+              textColor: const Color(0xFFC7E0B0),
+              onPressed: () {
+                setState(() {
+                  _selectedFilter = _PickupRequestFilter.pending;
+                });
+              },
+            ),
+          ),
+        );
+    });
+  }
+
+  Widget _buildRequestsContent(
+    BuildContext context,
+    List<PickupRequest> requests,
+  ) {
+    final pendingRequests = requests.where(_isPending).toList(growable: false);
+    final collectedRequests = requests
+        .where(_isCollected)
+        .toList(growable: false);
+    final visibleRequests = _filteredRequests(requests);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _PickupSummary(
+          pendingCount: pendingRequests.length,
+          collectedCount: collectedRequests.length,
+          totalCount: requests.length,
+        ),
+        const SizedBox(height: 12),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SegmentedButton<_PickupRequestFilter>(
+            segments: const [
+              ButtonSegment(
+                value: _PickupRequestFilter.all,
+                icon: Icon(Icons.list),
+                label: Text("Todas"),
+              ),
+              ButtonSegment(
+                value: _PickupRequestFilter.pending,
+                icon: Icon(Icons.schedule),
+                label: Text("Pendientes"),
+              ),
+              ButtonSegment(
+                value: _PickupRequestFilter.collected,
+                icon: Icon(Icons.check_circle),
+                label: Text("Recogidas"),
+              ),
+            ],
+            selected: {_selectedFilter},
+            onSelectionChanged: (selection) {
+              setState(() {
+                _selectedFilter = selection.first;
+              });
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: visibleRequests.isEmpty
+              ? const Center(child: Text("No hay solicitudes con este filtro"))
+              : _buildRequestList(context, visibleRequests),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRequestList(BuildContext context, List<PickupRequest> requests) {
+    if (_selectedFilter != _PickupRequestFilter.all) {
+      return ListView.separated(
+        itemCount: requests.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 8),
+        itemBuilder: (context, index) =>
+            _buildRequestCard(context, requests[index]),
+      );
+    }
+
+    final pendingRequests = requests.where(_isPending).toList(growable: false);
+    final collectedRequests = requests
+        .where(_isCollected)
+        .toList(growable: false);
+    final otherRequests = requests
+        .where((request) => !_isPending(request) && !_isCollected(request))
+        .toList(growable: false);
+
+    return ListView(
+      children: [
+        if (pendingRequests.isNotEmpty)
+          _RequestSection(
+            title: "Pendientes",
+            children: [
+              for (final request in pendingRequests)
+                _buildRequestCard(context, request),
+            ],
+          ),
+        if (collectedRequests.isNotEmpty)
+          _RequestSection(
+            title: "Recogidas",
+            children: [
+              for (final request in collectedRequests)
+                _buildRequestCard(context, request),
+            ],
+          ),
+        if (otherRequests.isNotEmpty)
+          _RequestSection(
+            title: "Otros estados",
+            children: [
+              for (final request in otherRequests)
+                _buildRequestCard(context, request),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildRequestCard(BuildContext context, PickupRequest request) {
+    final createdAt = request.createdAt;
+    final isPending = _isPending(request);
+    final cardColor = _requestCardColor(request.status);
+    final statusLabel = _statusLabel(request.status);
+    final collectedAt = request.collectedAt;
+
+    return Card(
+      color: cardColor,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.recycling),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        request.clientName.isEmpty
+                            ? request.clientEmail
+                            : request.clientName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        createdAt == null
+                            ? "${request.clientRoute} - fecha pendiente"
+                            : "${request.clientRoute} - ${_formatDate(createdAt)}",
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  widget.session.isManager
+                      ? "Op. ${request.assignedOperatorCode}"
+                      : statusLabel,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _RequestField(
+              label: "Nombre",
+              value: request.clientName.isEmpty
+                  ? request.clientEmail
+                  : request.clientName,
+            ),
+            _RequestField(label: "Direccion", value: request.clientAddress),
+            _RequestField(label: "Telefono", value: request.clientPhone),
+            _RequestField(label: "Contenedor", value: request.containerType),
+            _RequestField(
+              label: "Bidones",
+              value: "${request.drumCount} x ${request.drumCapacityLiters} L",
+            ),
+            _RequestField(label: "Campanas", value: "${request.filterCount}"),
+            _RequestField(
+              label: "Jabon",
+              value: request.needsSoap ? "Si" : "No",
+            ),
+            _RequestField(
+              label: "Operario asignado",
+              value: request.assignedOperatorCode == 0
+                  ? "Sin asignar"
+                  : "Operario ${request.assignedOperatorCode}",
+            ),
+            _RequestField(label: "Estado", value: statusLabel),
+            if (collectedAt != null)
+              _RequestField(
+                label: "Fecha recogida",
+                value: _formatDate(collectedAt),
+              ),
+            if (isPending || widget.session.isManager) ...[
+              const SizedBox(height: 14),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.end,
+                  children: [
+                    if (isPending)
+                      FilledButton.icon(
+                        onPressed: () =>
+                            _markRequestAsCollected(context, request),
+                        icon: const Icon(Icons.check_circle),
+                        label: const Text("Marcar recogido"),
+                      ),
+                    if (widget.session.isManager)
+                      FilledButton.icon(
+                        onPressed: () =>
+                            _confirmDeleteRequest(context, request),
+                        icon: const Icon(Icons.delete),
+                        label: const Text("Eliminar"),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<PickupRequest> _filteredRequests(List<PickupRequest> requests) {
+    switch (_selectedFilter) {
+      case _PickupRequestFilter.all:
+        return requests;
+      case _PickupRequestFilter.pending:
+        return requests.where(_isPending).toList(growable: false);
+      case _PickupRequestFilter.collected:
+        return requests.where(_isCollected).toList(growable: false);
+    }
+  }
+
+  bool _isPending(PickupRequest request) {
+    return request.status.trim().toLowerCase() == 'pendiente';
+  }
+
+  bool _isCollected(PickupRequest request) {
+    final normalizedStatus = request.status.trim().toLowerCase();
+
+    return normalizedStatus == 'recogido' ||
+        normalizedStatus == 'recogida' ||
+        normalizedStatus == 'realizado';
+  }
+
+  Color? _requestCardColor(String status) {
+    final normalizedStatus = status.trim().toLowerCase();
+
+    if (normalizedStatus == 'pendiente') {
+      return const Color(0xFFFF8A80);
+    }
+
+    if (normalizedStatus == 'recogido' ||
+        normalizedStatus == 'recogida' ||
+        normalizedStatus == 'realizado') {
+      return const Color(0xFF81C784);
+    }
+
+    return null;
+  }
+
+  String _statusLabel(String status) {
+    if (status.trim().toLowerCase() == 'pendiente') {
+      return 'Pendiente';
+    }
+
+    return status;
+  }
+
+  String _clientLabel(PickupRequest request) {
+    return request.clientName.isEmpty
+        ? request.clientEmail
+        : request.clientName;
+  }
+
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+
+    return "$day/$month/${date.year}";
+  }
+}
+
+class _PickupSummary extends StatelessWidget {
+  const _PickupSummary({
+    required this.pendingCount,
+    required this.collectedCount,
+    required this.totalCount,
+  });
+
+  final int pendingCount;
+  final int collectedCount;
+  final int totalCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _SummaryTile(
+            label: "Pendientes",
+            value: "$pendingCount",
+            color: const Color(0xFFFF8A80),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _SummaryTile(
+            label: "Recogidas",
+            value: "$collectedCount",
+            color: const Color(0xFF81C784),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _SummaryTile(
+            label: "Total",
+            value: "$totalCount",
+            color: Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SummaryTile extends StatelessWidget {
+  const _SummaryTile({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF7DA85E)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RequestSection extends StatelessWidget {
+  const _RequestSection({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 4, 4, 6),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+          ),
+          for (final child in children) ...[child, const SizedBox(height: 8)],
+        ],
+      ),
     );
   }
 }
@@ -393,13 +815,9 @@ class _ClientsTab extends StatelessWidget {
                     label: "Horario de recogida",
                     value: client.collectionSchedule,
                   ),
-                  _ClientField(
+                  const _ClientField(
                     label: "Contenedor",
-                    value: client.containerType,
-                  ),
-                  _ClientField(
-                    label: "Litros estimados",
-                    value: "${client.estimatedLiters} L",
+                    value: "Bidones 25L / Bidones 50L",
                   ),
                   _ClientField(
                     label: "Estado",
@@ -454,10 +872,9 @@ class _CreateClientDialogState extends State<_CreateClientDialog> {
   final _contactPersonController = TextEditingController();
   final _businessTypeController = TextEditingController();
   final _collectionScheduleController = TextEditingController();
-  final _containerTypeController = TextEditingController();
-  final _estimatedLitersController = TextEditingController();
   final _notesController = TextEditingController();
   String _selectedRoute = RouteAssignment.northRoute;
+  String _selectedContainerType = RouteAssignment.defaultContainerType;
   bool _active = true;
   bool _isSaving = false;
 
@@ -479,8 +896,6 @@ class _CreateClientDialogState extends State<_CreateClientDialog> {
     _contactPersonController.dispose();
     _businessTypeController.dispose();
     _collectionScheduleController.dispose();
-    _containerTypeController.dispose();
-    _estimatedLitersController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -505,8 +920,7 @@ class _CreateClientDialogState extends State<_CreateClientDialog> {
         contactPerson: _contactPersonController.text,
         businessType: _businessTypeController.text,
         collectionSchedule: _collectionScheduleController.text,
-        containerType: _containerTypeController.text,
-        estimatedLiters: int.parse(_estimatedLitersController.text.trim()),
+        containerType: _selectedContainerType,
         active: _active,
         notes: _notesController.text,
       );
@@ -558,20 +972,6 @@ class _CreateClientDialogState extends State<_CreateClientDialog> {
 
     if (!emailFormat.hasMatch(email)) {
       return "Introduce un email valido";
-    }
-
-    return null;
-  }
-
-  String? _validateEstimatedLiters(String? value) {
-    final liters = int.tryParse(value?.trim() ?? "");
-
-    if (liters == null) {
-      return "Introduce un numero valido";
-    }
-
-    if (liters <= 0) {
-      return "Debe ser mayor que 0";
     }
 
     return null;
@@ -651,17 +1051,30 @@ class _CreateClientDialogState extends State<_CreateClientDialog> {
                   label: "Horario de recogida",
                   validator: _requiredText,
                 ),
-                _ClientTextField(
-                  controller: _containerTypeController,
-                  label: "Tipo de contenedor",
-                  validator: _requiredText,
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedContainerType,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: "Tamaño del bidon",
+                  ),
+                  items: [
+                    for (final containerType
+                        in RouteAssignment.availableContainerTypes)
+                      DropdownMenuItem(
+                        value: containerType,
+                        child: Text(containerType),
+                      ),
+                  ],
+                  onChanged: _isSaving
+                      ? null
+                      : (value) {
+                          if (value == null) return;
+                          setState(() {
+                            _selectedContainerType = value;
+                          });
+                        },
                 ),
-                _ClientTextField(
-                  controller: _estimatedLitersController,
-                  label: "Litros estimados",
-                  keyboardType: TextInputType.number,
-                  validator: _validateEstimatedLiters,
-                ),
+                const SizedBox(height: 12),
                 _ClientTextField(
                   controller: _notesController,
                   label: "Observaciones",

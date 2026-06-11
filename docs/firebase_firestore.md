@@ -13,11 +13,12 @@ Cada documento representa una solicitud de recogida creada por un cliente.
   "clientAddress": "Calle Norte 1",
   "clientPhone": "600000101",
   "clientRoute": "ruta norte",
-  "containerType": "Contenedor 120 L",
+  "containerType": "Contenedor 50 L",
   "assignedOperatorCode": 1,
   "notes": "",
   "status": "pendiente",
   "createdAt": "serverTimestamp",
+  "collectedAt": null,
   "updatedAt": "serverTimestamp"
 }
 ```
@@ -80,9 +81,18 @@ Cada documento representa una solicitud de recogida creada por un cliente.
 Estados recomendados para `status`:
 
 - `pendiente`
-- `asignada`
-- `recogida`
+- `Recogido`
 - `cancelada`
+
+Cuando el operario marca una solicitud como recogida, la app actualiza:
+
+```json
+{
+  "status": "Recogido",
+  "collectedAt": "serverTimestamp",
+  "updatedAt": "serverTimestamp"
+}
+```
 
 ### `clientes`
 
@@ -142,8 +152,8 @@ Correos de clientes de la ruta norte asignados al operario 1:
 
 Estas reglas sirven solo para probar la app durante el desarrollo. Antes de
 entregar el proyecto conviene usar Firebase Auth y reglas por usuario.
-Para que el boton de eliminar del encargado funcione, estas reglas deben estar
-publicadas en Firebase Console.
+Para que los botones de marcar como recogida y eliminar del encargado funcionen,
+estas reglas deben estar publicadas en Firebase Console.
 
 ```js
 rules_version = '2';
@@ -153,7 +163,7 @@ service cloud.firestore {
     match /recogidas/{document} {
       allow read, create: if true;
       allow delete: if true;
-      allow update: if false;
+      allow update: if true;
     }
 
     match /clientes/{document} {

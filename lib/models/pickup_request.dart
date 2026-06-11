@@ -8,6 +8,7 @@ class PickupRequest {
     required this.clientEmail,
     required this.status,
     required this.createdAt,
+    this.collectedAt,
     required this.clientRoute,
     required this.assignedOperatorCode,
     this.clientName = '',
@@ -15,12 +16,17 @@ class PickupRequest {
     this.clientPhone = '',
     this.containerType = '',
     this.notes = '',
+    this.drumCount = 1,
+    this.drumCapacityLiters = 25,
+    this.filterCount = 0,
+    this.needsSoap = false,
   });
 
   final String id;
   final String clientEmail;
   final String status;
   final DateTime? createdAt;
+  final DateTime? collectedAt;
   final String clientRoute;
   final int assignedOperatorCode;
   final String clientName;
@@ -28,6 +34,10 @@ class PickupRequest {
   final String clientPhone;
   final String containerType;
   final String notes;
+  final int drumCount;
+  final int drumCapacityLiters;
+  final int filterCount;
+  final bool needsSoap;
 
   factory PickupRequest.fromSnapshot(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
@@ -48,6 +58,7 @@ class PickupRequest {
       clientEmail: clientEmail,
       status: data['status'] as String? ?? 'pendiente',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      collectedAt: (data['collectedAt'] as Timestamp?)?.toDate(),
       clientRoute: clientRoute,
       assignedOperatorCode: assignedOperatorCode,
       clientName:
@@ -59,10 +70,15 @@ class PickupRequest {
       clientPhone:
           data['clientPhone'] as String? ??
           RouteAssignment.clientPhoneFromEmail(clientEmail),
-      containerType:
-          data['containerType'] as String? ??
-          RouteAssignment.containerTypeFromEmail(clientEmail),
+      containerType: RouteAssignment.normalizeContainerType(
+        data['containerType'] as String? ??
+            RouteAssignment.containerTypeFromEmail(clientEmail),
+      ),
       notes: data['notes'] as String? ?? '',
+      drumCount: data['drumCount'] as int? ?? 1,
+      drumCapacityLiters: data['drumCapacityLiters'] as int? ?? 25,
+      filterCount: data['filterCount'] as int? ?? 0,
+      needsSoap: data['needsSoap'] as bool? ?? false,
     );
   }
 }

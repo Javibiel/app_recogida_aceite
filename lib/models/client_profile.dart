@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'route_assignment.dart';
+
 class ClientProfile {
   const ClientProfile({
     required this.id,
@@ -13,7 +15,6 @@ class ClientProfile {
     required this.businessType,
     required this.collectionSchedule,
     required this.containerType,
-    required this.estimatedLiters,
     required this.active,
     this.notes = '',
   });
@@ -29,7 +30,6 @@ class ClientProfile {
   final String businessType;
   final String collectionSchedule;
   final String containerType;
-  final int estimatedLiters;
   final bool active;
   final String notes;
 
@@ -49,8 +49,9 @@ class ClientProfile {
       contactPerson: data['personaContacto'] as String? ?? '',
       businessType: data['tipoNegocio'] as String? ?? '',
       collectionSchedule: data['horarioRecogida'] as String? ?? '',
-      containerType: data['tipoContenedor'] as String? ?? '',
-      estimatedLiters: data['litrosEstimados'] as int? ?? 0,
+      containerType: RouteAssignment.normalizeContainerType(
+        data['tipoContenedor'] as String? ?? '',
+      ),
       active: data['activo'] as bool? ?? true,
       notes: data['observaciones'] as String? ?? '',
     );

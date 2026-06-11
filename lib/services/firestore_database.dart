@@ -118,7 +118,6 @@ class FirestoreDatabase {
     required String businessType,
     required String collectionSchedule,
     required String containerType,
-    required int estimatedLiters,
     required bool active,
     String notes = '',
   }) async {
@@ -140,8 +139,7 @@ class FirestoreDatabase {
       'personaContacto': contactPerson.trim(),
       'tipoNegocio': businessType.trim(),
       'horarioRecogida': collectionSchedule.trim(),
-      'tipoContenedor': containerType.trim(),
-      'litrosEstimados': estimatedLiters,
+      'tipoContenedor': RouteAssignment.normalizeContainerType(containerType),
       'observaciones': notes.trim(),
       'activo': active,
       'password': '1234',
@@ -157,30 +155,68 @@ class FirestoreDatabase {
     final normalizedEmail = email.trim().toLowerCase();
     final snapshot = await _clients
         .where('email', isEqualTo: normalizedEmail)
-        .limit(1)
         .get();
 
     if (snapshot.docs.isEmpty) {
       return ClientLoginResult.emailNotFound;
     }
 
-    final data = snapshot.docs.first.data();
-    final storedPassword = data['password'] as String? ?? '';
-    final active = data['activo'] as bool? ?? true;
+    final matchingPasswordDocs = snapshot.docs
+        .where((doc) {
+          final data = doc.data();
+          final storedPassword = data['password'] as String? ?? '';
 
-    if (!active) {
-      return ClientLoginResult.inactive;
+          return storedPassword == password;
+        })
+        .toList(growable: false);
+
+    if (matchingPasswordDocs.isEmpty) {
+      return ClientLoginResult.wrongPassword;
     }
 
-    if (storedPassword != password) {
-      return ClientLoginResult.wrongPassword;
+    final hasActiveClient = matchingPasswordDocs.any((doc) {
+      final data = doc.data();
+
+      return data['activo'] as bool? ?? true;
+    });
+
+    final isSeedClient = RouteAssignment.routeFromClientEmail(
+      normalizedEmail,
+    ).isNotEmpty;
+
+    if (!hasActiveClient && isSeedClient && password == '1234') {
+      await _activateClients(matchingPasswordDocs);
+      return ClientLoginResult.success;
+    }
+
+    if (!hasActiveClient) {
+      return ClientLoginResult.inactive;
     }
 
     return ClientLoginResult.success;
   }
 
+  Future<void> _activateClients(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> clients,
+  ) async {
+    final batch = _firestore.batch();
+
+    for (final client in clients) {
+      batch.update(client.reference, {
+        'activo': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    await batch.commit();
+  }
+
   Future<void> createPickupRequest({
     required String clientEmail,
+    required int drumCount,
+    required int drumCapacityLiters,
+    required int filterCount,
+    required bool needsSoap,
     String notes = '',
   }) async {
     final normalizedEmail = clientEmail.trim().toLowerCase();
@@ -200,6 +236,10 @@ class FirestoreDatabase {
       'clientPhone': client?.phone ?? '',
       'clientRoute': clientRoute,
       'containerType': client?.containerType ?? '',
+      'drumCount': drumCount,
+      'drumCapacityLiters': drumCapacityLiters,
+      'filterCount': filterCount,
+      'needsSoap': needsSoap,
       'assignedOperatorCode': assignedOperatorCode,
       'notes': notes,
       'status': 'pendiente',
@@ -210,6 +250,14 @@ class FirestoreDatabase {
 
   Future<void> deletePickupRequest(String requestId) {
     return _pickupRequests.doc(requestId).delete();
+  }
+
+  Future<void> markPickupRequestAsCollected(String requestId) {
+    return _pickupRequests.doc(requestId).update({
+      'status': 'Recogido',
+      'collectedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   Stream<List<PickupRequest>> watchPickupRequests({int? operatorCode}) {
@@ -248,14 +296,19 @@ class FirestoreDatabase {
     try {
       final snapshot = await _clients
           .where('email', isEqualTo: normalizedEmail)
-          .limit(1)
           .get();
 
       if (snapshot.docs.isEmpty) {
         return null;
       }
 
-      return ClientProfile.fromSnapshot(snapshot.docs.first);
+      final activeClient = snapshot.docs.where((doc) {
+        final data = doc.data();
+
+        return data['activo'] as bool? ?? true;
+      }).firstOrNull;
+
+      return ClientProfile.fromSnapshot(activeClient ?? snapshot.docs.first);
     } on FirebaseException {
       return null;
     }
@@ -292,7 +345,6 @@ class FirestoreDatabase {
           'tipoNegocio': _businessType(index),
           'horarioRecogida': _collectionSchedule(index),
           'tipoContenedor': _containerType(index),
-          'litrosEstimados': 40 + (index * 15),
           'observaciones': 'Ficha pendiente de validacion en proxima visita.',
           'activo': true,
           'password': '1234',
@@ -398,7 +450,7 @@ class FirestoreDatabase {
   }
 
   String _containerType(int index) {
-    return index.isEven ? 'Bidon 60 L' : 'Contenedor 120 L';
+    return index.isEven ? 'Bidon 50 L' : RouteAssignment.defaultContainerType;
   }
 }
 

@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../../services/firestore_database.dart';
 import '../../routes/app_routes.dart';
-import '../../widgets/marquee_app_bar_title.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -114,20 +113,18 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFD7E6C3),
+        backgroundColor: const Color(0xFFC7E0B0),
         foregroundColor: const Color(0xFF1F4D35),
         elevation: 0,
-        title: const MarqueeAppBarTitle(
-          text: "Mas de treinta años preocupandonos por el medioambiente.",
-        ),
       ),
-      backgroundColor: const Color(0xFFD7E6C3),
+      backgroundColor: const Color(0xFFC7E0B0),
       body: SafeArea(
         child: Stack(
           children: [
-            Center(
+            Align(
+              alignment: Alignment.topCenter,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 56),
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 56),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
                   child: Form(
@@ -209,7 +206,7 @@ class _AccessTypeSelector extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 36),
 
         _AccessCard(
           icon: Icons.storefront,
@@ -278,7 +275,7 @@ class _BrandHeader extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 32),
+        const SizedBox(height: 56),
       ],
     );
   }
@@ -443,7 +440,7 @@ class _ClientAccessForm extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        TextButton(onPressed: onBack, child: const Text("Volver")),
+        _BackButton(onPressed: onBack),
       ],
     );
   }
@@ -528,8 +525,27 @@ class _OperatorAccessForm extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        TextButton(onPressed: onBack, child: const Text("Volver")),
+        _BackButton(onPressed: onBack),
       ],
+    );
+  }
+}
+
+class _BackButton extends StatelessWidget {
+  const _BackButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF1F4D35),
+        side: const BorderSide(color: Color(0xFFBFD3A6)),
+      ),
+      onPressed: onPressed,
+      child: const Text("Volver"),
     );
   }
 }

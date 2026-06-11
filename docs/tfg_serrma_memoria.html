@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>TFG SERRMA - Memoria de la app</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 17mm 18mm 17mm;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: #243326;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10.6pt;
+      line-height: 1.42;
+      background: #ffffff;
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: #1f4d35;
+      line-height: 1.16;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 31pt;
+      text-align: center;
+      margin-top: 8mm;
+    }
+
+    h2 {
+      font-size: 16pt;
+      margin-top: 8mm;
+      padding-bottom: 2mm;
+      border-bottom: 1px solid #c7e0b0;
+    }
+
+    h3 {
+      font-size: 12pt;
+      margin-top: 5mm;
+    }
+
+    p {
+      margin: 0 0 3.2mm;
+    }
+
+    ul,
+    ol {
+      margin: 2mm 0 4mm 6mm;
+      padding-left: 5mm;
+    }
+
+    li {
+      margin-bottom: 1.3mm;
+    }
+
+    .cover {
+      min-height: 250mm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      page-break-after: always;
+      border: 2px solid #c7e0b0;
+      padding: 22mm;
+      background: linear-gradient(180deg, #f7faf3 0%, #ffffff 55%, #eef6e8 100%);
+    }
+
+    .logo {
+      width: 52mm;
+      max-height: 42mm;
+      object-fit: contain;
+      background: #ffffff;
+      border: 1px solid #c7e0b0;
+      border-radius: 8px;
+      padding: 5mm;
+      margin-bottom: 9mm;
+    }
+
+    .subtitle {
+      color: #456b3d;
+      font-size: 14pt;
+      margin-top: 3mm;
+      max-width: 150mm;
+    }
+
+    .badge {
+      margin-top: 7mm;
+      padding: 3mm 5mm;
+      color: #1f4d35;
+      background: #d7e6c3;
+      border: 1px solid #a8c58b;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .summary {
+      width: 100%;
+      margin-top: 13mm;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 10pt;
+    }
+
+    .summary th {
+      width: 35%;
+      color: #1f4d35;
+      background: #d7e6c3;
+    }
+
+    .summary td {
+      background: #ffffff;
+    }
+
+    .summary th,
+    .summary td,
+    .data-table th,
+    .data-table td {
+      border: 1px solid #a8c58b;
+      padding: 3mm;
+      vertical-align: top;
+    }
+
+    .page {
+      page-break-after: always;
+    }
+
+    .data-table {
+      width: 100%;
+      margin: 3mm 0 5mm;
+      border-collapse: collapse;
+      font-size: 9.5pt;
+    }
+
+    .data-table th {
+      color: #ffffff;
+      background: #1f4d35;
+      text-align: left;
+    }
+
+    .data-table td {
+      background: #f7faf3;
+    }
+
+    .callout {
+      margin: 4mm 0;
+      padding: 4mm;
+      border-left: 4px solid #5e7f4f;
+      background: #f7faf3;
+    }
+
+    .footer-note {
+      margin-top: 6mm;
+      color: #5e7f4f;
+      font-size: 9pt;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <img class="logo" src="../assets/images/logo_serrma.jpg" alt="Logo SERRMA">
+    <h1>SERRMA</h1>
+    <p class="subtitle">Aplicacion multiplataforma para la gestion de recogida de aceite</p>
+    <p class="badge">Documento de apoyo para la exposicion del TFG</p>
+    <table class="summary">
+      <tr><th>Tecnologias</th><td>Flutter, Dart, Firebase y Cloud Firestore</td></tr>
+      <tr><th>Roles</th><td>Cliente, operario y encargado</td></tr>
+      <tr><th>Objetivo</th><td>Digitalizar solicitudes, rutas y estados de recogida</td></tr>
+      <tr><th>Enfoque</th><td>Beta funcional conectada a una base de datos en la nube</td></tr>
+    </table>
+  </section>
+
+  <main>
+    <section>
+      <h2>1. Introduccion</h2>
+      <p>Este documento resume los puntos principales de la aplicacion desarrollada para el TFG: una solucion multiplataforma para gestionar solicitudes de recogida de residuos de aceite entre clientes, operarios y encargado.</p>
+      <p>SERRMA digitaliza un proceso que puede depender de llamadas, mensajes o registros manuales. Con la app, el cliente solicita una recogida y el operario consulta las solicitudes asignadas a su ruta, las marca como recogidas y mantiene una trazabilidad basica del servicio.</p>
+
+      <h2>2. Problema que resuelve</h2>
+      <p>En una empresa de recogida de residuos, la coordinacion entre clientes y trabajadores puede generar retrasos, duplicidades o falta de informacion actualizada. El sistema reduce estos problemas mediante:</p>
+      <ul>
+        <li>Registro centralizado de clientes.</li>
+        <li>Solicitud digital de recogidas.</li>
+        <li>Asignacion automatica de solicitudes por ruta.</li>
+        <li>Consulta en tiempo real para operarios.</li>
+        <li>Diferenciacion visual entre recogidas pendientes y realizadas.</li>
+        <li>Acceso especial de encargado para consultar todas las rutas y gestionar clientes.</li>
+      </ul>
+
+      <h2>3. Objetivos del proyecto</h2>
+      <ul>
+        <li>Crear una aplicacion funcional para una situacion real de gestion de residuos.</li>
+        <li>Separar claramente los perfiles de cliente, operario y encargado.</li>
+        <li>Utilizar una arquitectura sencilla, mantenible y adecuada para una version beta.</li>
+        <li>Aprovechar tecnologias modernas que permitan evolucionar el proyecto.</li>
+        <li>Dejar una base preparada para autenticacion real, permisos, notificaciones y estadisticas.</li>
+      </ul>
+
+      <h2>4. Tecnologias utilizadas</h2>
+      <h3>Flutter</h3>
+      <p>Flutter se ha elegido porque permite desarrollar para varias plataformas desde una unica base de codigo. Esto encaja con una empresa que puede necesitar usar la app en movil, tablet o web sin mantener aplicaciones separadas.</p>
+      <ul>
+        <li>Desarrollo multiplataforma con un unico codigo Dart.</li>
+        <li>Interfaz consistente en distintos dispositivos.</li>
+        <li>Alta productividad gracias al sistema de widgets.</li>
+        <li>Integracion sencilla con Firebase.</li>
+        <li>Buena base para evolucionar la beta hacia Android, iOS o web.</li>
+      </ul>
+
+      <h3>Firebase y Cloud Firestore</h3>
+      <p>Firebase actua como backend gestionado. En lugar de crear y mantener un servidor propio, la aplicacion guarda clientes, operarios y solicitudes en Cloud Firestore.</p>
+      <ul>
+        <li>Base de datos en la nube sin administrar infraestructura.</li>
+        <li>Sincronizacion en tiempo real mediante streams.</li>
+        <li>Integracion directa con Flutter.</li>
+        <li>Escalabilidad adecuada para una app de gestion.</li>
+        <li>Posibilidad de anadir Authentication, reglas de seguridad, Cloud Functions y notificaciones.</li>
+      </ul>
+    </section>
+
+    <section class="page">
+      <h2>5. Arquitectura general</h2>
+      <table class="data-table">
+        <tr><th>Archivo o carpeta</th><th>Responsabilidad</th></tr>
+        <tr><td>main.dart</td><td>Inicializa Flutter, Firebase y la carga de datos iniciales.</td></tr>
+        <tr><td>app.dart</td><td>Configura MaterialApp, tema y rutas principales.</td></tr>
+        <tr><td>presentation/screens</td><td>Contiene las pantallas de login, cliente y operario.</td></tr>
+        <tr><td>presentation/routes</td><td>Centraliza las rutas de navegacion.</td></tr>
+        <tr><td>models</td><td>Define las entidades principales del dominio.</td></tr>
+        <tr><td>services/firestore_database.dart</td><td>Agrupa las operaciones contra Cloud Firestore.</td></tr>
+      </table>
+
+      <h2>6. Modelo de datos</h2>
+      <ul>
+        <li><strong>Clientes:</strong> CIF, nombre, email, telefono, direccion, ruta, contacto, tipo de negocio, horario, contenedor, observaciones y estado activo.</li>
+        <li><strong>Solicitudes de recogida:</strong> cliente, ruta, bidones, capacidad, filtros, jabon, estado, operario asignado y fechas de creacion y recogida.</li>
+        <li><strong>Operarios y rutas:</strong> cinco operarios asignados a norte, sur, oeste, este y centro; el encargado puede ver todas las rutas.</li>
+      </ul>
+
+      <h2>7. Funcionalidades implementadas</h2>
+      <table class="data-table">
+        <tr><th>Rol</th><th>Funcionalidades</th></tr>
+        <tr><td>Cliente</td><td>Inicia sesion, solicita recogidas, indica bidones, capacidad, filtros y jabon.</td></tr>
+        <tr><td>Operario</td><td>Consulta su ruta, filtra solicitudes, ve datos completos y marca recogidas como realizadas.</td></tr>
+        <tr><td>Encargado</td><td>Consulta todas las rutas, crea clientes, elimina solicitudes de prueba y supervisa contadores.</td></tr>
+      </table>
+
+      <h2>8. Flujo principal de uso</h2>
+      <ol>
+        <li>El cliente inicia sesion.</li>
+        <li>Solicita una recogida e introduce los datos necesarios.</li>
+        <li>La solicitud se guarda en Firestore con estado pendiente.</li>
+        <li>El operario asignado a la ruta consulta la solicitud en la app.</li>
+        <li>La solicitud aparece destacada visualmente como pendiente.</li>
+        <li>El operario realiza la recogida y la marca como completada.</li>
+        <li>El estado cambia a Recogido y se registra la fecha de recogida.</li>
+        <li>El encargado puede consultar el historico y el estado global.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>9. Justificacion tecnica</h2>
+      <p>La combinacion de Flutter y Firebase es adecuada porque resuelve dos necesidades clave: crear una interfaz multiplataforma y disponer de una base de datos en tiempo real sin desarrollar un backend completo desde cero.</p>
+      <p>Flutter aporta rapidez de desarrollo, una experiencia visual uniforme y facilidad para crear formularios, listas, dialogos y navegacion. Firebase aporta persistencia, sincronizacion y una base preparada para crecer.</p>
+      <p>Otra decision importante ha sido separar el acceso a datos en <strong>FirestoreDatabase</strong>. Esto evita que todas las pantallas conozcan directamente los detalles de Firestore y mejora la mantenibilidad.</p>
+
+      <h2>10. Aspectos destacables para la exposicion</h2>
+      <ul>
+        <li>La app esta conectada a una base de datos real en la nube.</li>
+        <li>Las solicitudes se actualizan en tiempo real mediante streams.</li>
+        <li>Existe asignacion automatica de rutas a operarios.</li>
+        <li>Se diferencia el rol de cliente, operario y encargado.</li>
+        <li>La interfaz muestra estados visuales: pendiente en rojo y recogido en verde.</li>
+        <li>Se registra trazabilidad basica: fecha de solicitud y fecha de recogida.</li>
+        <li>La estructura del codigo esta separada en modelos, servicios y pantallas.</li>
+        <li>El proyecto se presenta como beta funcional con margen claro de evolucion.</li>
+      </ul>
+
+      <h2>11. Limitaciones de la version beta</h2>
+      <div class="callout">
+        Reconocer estas limitaciones durante la exposicion es positivo, porque demuestra criterio tecnico y capacidad de analizar la evolucion del proyecto.
+      </div>
+      <ul>
+        <li>No usa Firebase Authentication real por usuario.</li>
+        <li>Las contrasenas son simples y estan pensadas para la demostracion.</li>
+        <li>Las reglas de Firestore son temporales y deben endurecerse.</li>
+        <li>No existe gestion avanzada de permisos por documento.</li>
+        <li>No hay notificaciones push.</li>
+        <li>No incluye panel de estadisticas ni exportacion de informes.</li>
+      </ul>
+
+      <h2>12. Mejoras futuras</h2>
+      <ul>
+        <li>Incorporar Firebase Authentication.</li>
+        <li>Definir reglas de seguridad por rol y usuario.</li>
+        <li>Crear notificaciones push para avisar a operarios.</li>
+        <li>Anadir modo offline para zonas con mala cobertura.</li>
+        <li>Implementar estadisticas por ruta, fecha y litros recogidos.</li>
+        <li>Exportar historicos en PDF o Excel.</li>
+        <li>Crear un panel web de administracion para el encargado.</li>
+      </ul>
+
+      <h2>13. Conclusion</h2>
+      <p>SERRMA demuestra como una aplicacion multiplataforma puede mejorar un proceso real de gestion de residuos. El proyecto digitaliza la comunicacion entre cliente, operario y encargado, centraliza la informacion en la nube y ofrece una base funcional sobre la que seguir creciendo.</p>
+      <p>La eleccion de Flutter y Firebase permite presentar una solucion moderna, escalable y realista para una empresa que necesita movilidad, rapidez de desarrollo y datos actualizados en tiempo real.</p>
+      <p class="footer-note">Documento generado como apoyo a la defensa del TFG.</p>
+    </section>
+  </main>
+</body>
+</html>

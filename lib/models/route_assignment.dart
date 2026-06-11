@@ -6,6 +6,15 @@ class RouteAssignment {
   static const String westRoute = 'ruta oeste';
   static const String eastRoute = 'ruta este';
   static const String centerRoute = 'ruta centro';
+  static const String defaultContainerType = 'Bidon 25 L';
+  static const int drumCount = 1;
+  static const int drumCapacityLiters = 25;
+  static const int filterCount = 0;
+  static const bool needsSoap = false;
+  static const List<String> availableContainerTypes = [
+    defaultContainerType,
+    'Bidon 50 L',
+  ];
 
   static String routeFromClientEmail(String clientEmail) {
     final email = clientEmail.trim().toLowerCase();
@@ -69,7 +78,21 @@ class RouteAssignment {
       return '';
     }
 
-    return index.isEven ? 'Bidon 60 L' : 'Contenedor 120 L';
+    return index.isEven ? 'Bidon 50 L' : defaultContainerType;
+  }
+
+  static String normalizeContainerType(String containerType) {
+    final normalized = containerType.trim().toLowerCase();
+
+    if (normalized.contains('50')) {
+      return 'Bidon 50 L';
+    }
+
+    if (normalized.contains('25')) {
+      return defaultContainerType;
+    }
+
+    return defaultContainerType;
   }
 
   static int? clientIndexFromEmail(String clientEmail) {
