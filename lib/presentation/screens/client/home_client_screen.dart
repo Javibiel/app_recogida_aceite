@@ -57,31 +57,37 @@ class HomeClientScreen extends StatelessWidget {
       appBar: AppBar(backgroundColor: const Color(0xFFC7E0B0)),
       backgroundColor: const Color(0xFFC7E0B0),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("Bienvenido a SERRMA, $clientEmail"),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Bienvenido a SERRMA, $clientEmail",
+                textAlign: TextAlign.center,
+              ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            ElevatedButton(
-              onPressed: () => _createPickupRequest(context, clientEmail),
-              child: const Text("SOLICITAR RECOGIDA DE RESIDUO"),
-            ),
+              ElevatedButton(
+                onPressed: () => _createPickupRequest(context, clientEmail),
+                child: const Text("SOLICITAR RECOGIDA DE RESIDUO"),
+              ),
 
-            const SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  AppRoutes.login,
-                  (route) => false,
-                );
-              },
-              child: const Text("Volver al inicio"),
-            ),
-          ],
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.login,
+                    (route) => false,
+                  );
+                },
+                child: const Text("Volver al inicio"),
+              ),
+            ],
+          ),
         ),
       ),
     );
